@@ -442,11 +442,11 @@ defmodule ICal.Deserialize do
   @spec to_date(String.t() | nil, map, ICal.t()) :: Date.t() | DateTime.t() | nil
   def to_date(nil, _params, _calendar), do: nil
 
-  def to_date(date_string, %{"TZID" => timezone}, %ICal{default_timezone: default_timezone}) do
+  def to_date(date_string, %{"TZID" => timezone} = params, %ICal{default_timezone: default_timezone}) do
     # Microsoft Outlook calendar .ICS files report times in Greenwich Standard Time (UTC +0)
     # so just convert this to UTC
     timezone = to_timezone(timezone, default_timezone)
-    to_date_in_timezone(date_string, timezone)
+    to_date_in_timezone(date_string, timezone, Map.delete(params, "TZID"))
   end
 
   def to_date(date_string, %{"VALUE" => "DATE"}, _calendar) do
@@ -466,7 +466,13 @@ defmodule ICal.Deserialize do
     to_date_in_timezone(date_string, default_timezone)
   end
 
-  def to_date_in_timezone(date_string, timezone) do
+  def to_date_in_timezone(date_string, timezone, params \\ nil)
+
+  def to_date_in_timezone(date_string, _timezone, %{"VALUE" => "DATE"} = params) do
+    to_date(date_string, params, nil)
+  end
+
+  def to_date_in_timezone(date_string, timezone, _params) do
     # datetime in the form "{YYYY}{0M}{0D}T{h24}{m}{s}Z{Zname}"
     with <<y::binary-size(4), m::binary-size(2), d::binary-size(2), ?T, t_h::binary-size(2),
            t_m::binary-size(2), t_s::binary-size(2), rest::binary>>

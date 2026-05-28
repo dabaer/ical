@@ -288,6 +288,13 @@ defmodule ICal.DeserializeTest do
       assert event.dtstamp.time_zone == "Etc/UTC"
     end
 
+    test "date only dtstart and end" do
+      ics = Helper.test_data("date_only")
+      %ICal{events: [event]} = ICal.from_ics(ics)
+      assert event.dtstart == ~D[2222-12-24]
+      assert event.dtend == ~D[2222-12-24]
+    end
+
     test "with CR+LF line endings" do
       ics = Helper.test_data("cr_lf")
       %ICal{events: [event]} = ICal.from_ics(ics)
